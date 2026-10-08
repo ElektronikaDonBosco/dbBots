@@ -1,0 +1,667 @@
+<!doctype html>
+<html lang="eu">
+<head>
+<meta charset="utf-8">
+<meta name="description" content="dbBots lerro-jarraitzailea muntatzeko eta programatzeko gida ikastetxeentzat: mBlock eta Arduino.">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>dbBots Lerro-jarraitzailea</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a test track — white paper, one black line running down the left of every section, wire colours from the circuit as the only colour. */
+:root{
+  --paper:#fbfbf8; --surface:#ffffff; --sunk:#f1f1ec; --ink:#141414; --muted:#5d5d57; --rule:#dcdcd4;
+  --line:#111111;             /* the track line */
+  --accent:#e8850c;           /* orange from the dbSariak slides */
+  --accent-ink:#9a5200;
+  --w-ezk:#1f6fd1;            /* blue wires: left motor */
+  --w-esk:#1b9a3c;            /* green wires: right motor */
+  --w-pwm-ezk:#a271c2;        /* lilac: PWM left */
+  --w-pwm-esk:#1fb3c9;        /* cyan: PWM right */
+  --w-5v:#d22b2b; --w-gnd:#141414;
+  --warn-bg:#fff4e0; --warn-ink:#7a4300;
+  --code-bg:#16181d; --code-fg:#e7e7e1; --code-com:#8b93a1; --code-kw:#7fc4ff; --code-num:#ffb86b; --code-str:#9be08f;
+  --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#121311; --surface:#1a1b19; --sunk:#222320; --ink:#ecece6; --muted:#a3a39b; --rule:#34352f;
+  --line:#ecece6; --accent:#f59a2a; --accent-ink:#ffbf6e;
+  --w-ezk:#5c9cf0; --w-esk:#4cc46c; --w-pwm-ezk:#c49ae0; --w-pwm-esk:#4fd1e3; --w-5v:#f06060; --w-gnd:#ecece6;
+  --warn-bg:#2e2310; --warn-ink:#ffcf8a; --code-bg:#0b0c0e; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --paper:#121311; --surface:#1a1b19; --sunk:#222320; --ink:#ecece6; --muted:#a3a39b; --rule:#34352f;
+  --line:#ecece6; --accent:#f59a2a; --accent-ink:#ffbf6e;
+  --w-ezk:#5c9cf0; --w-esk:#4cc46c; --w-pwm-ezk:#c49ae0; --w-pwm-esk:#4fd1e3; --w-5v:#f06060; --w-gnd:#ecece6;
+  --warn-bg:#2e2310; --warn-ink:#ffcf8a; --code-bg:#0b0c0e; color-scheme:dark }
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.6 var(--f-body);-webkit-font-smoothing:antialiased}
+a{color:var(--accent-ink)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:4px}
+h1,h2,h3{font-family:var(--f-display);line-height:1.08;text-wrap:balance;margin:0}
+h2{font-size:clamp(1.9rem,4.2vw,2.8rem);font-weight:850;font-stretch:88%;letter-spacing:-.01em}
+h3{font-size:1.3rem;font-weight:750;font-stretch:95%}
+p{margin:0}
+code,kbd{font-family:var(--f-mono);font-size:.88em}
+p code,li code,td code{background:var(--sunk);padding:.08em .35em;border-radius:4px}
+
+/* top bar */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--rule)}
+.bar-in{max-width:1180px;margin:0 auto;padding:10px 16px;display:flex;gap:18px;align-items:center}
+.brand{font:800 1rem/1 var(--f-display);font-stretch:110%;letter-spacing:.02em;white-space:nowrap;text-decoration:none;color:var(--ink)}
+.brand b{color:var(--accent)}
+.nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;margin-left:auto}
+.nav::-webkit-scrollbar{display:none}
+.nav a{font:600 .82rem/1 var(--f-body);color:var(--muted);text-decoration:none;padding:8px 10px;border-radius:999px;white-space:nowrap}
+.nav a:hover{color:var(--ink);background:var(--sunk)}
+
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px}
+
+/* hero */
+.hero{padding-block:56px 40px;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:40px;align-items:center}
+.eyebrow{font:700 .78rem/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent-ink)}
+.hero h1{font-size:clamp(2.3rem,5.6vw,4.4rem);overflow-wrap:anywhere;font-weight:900;font-stretch:75%;letter-spacing:-.02em;margin-top:14px;text-transform:uppercase}
+.hero h1 span{display:block;font-stretch:125%;font-weight:800;font-size:.42em;letter-spacing:.01em;text-transform:none;margin-top:6px;color:var(--muted)}
+.lede{font-size:1.15rem;max-width:56ch;margin-top:20px}
+.phases{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}
+.phase-chip{display:flex;gap:12px;align-items:center;text-decoration:none;color:var(--ink);border:1.5px solid var(--ink);border-radius:10px;padding:10px 14px;background:var(--surface)}
+.phase-chip .n{font:900 1.6rem/1 var(--f-display);color:var(--accent)}
+.phase-chip small{display:block;color:var(--muted);font-size:.8rem}
+.phase-chip:hover{background:var(--sunk)}
+.hero-art{width:100%;max-width:520px;justify-self:end}
+.hero-art svg{width:100%;height:auto;display:block}
+
+/* section scaffold: the track line on the left */
+.sec{position:relative;padding-block:56px;border-top:1px solid var(--rule)}
+.sec-head{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:baseline;margin-bottom:28px}
+.step{font:900 .9rem/1 var(--f-mono);background:var(--line);color:var(--paper);padding:7px 9px;border-radius:6px;letter-spacing:.04em}
+.sec-head p{grid-column:2;color:var(--muted);max-width:68ch;margin-top:8px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+@media (max-width:860px){.hero{grid-template-columns:1fr;padding-block:36px 28px}.hero-art{justify-self:start}.grid2,.grid3{grid-template-columns:1fr}}
+
+/* parts */
+.part{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.part .pic{height:150px;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:8px;overflow:hidden}
+.part .pic img{max-height:140px;width:auto;object-fit:contain}
+.part .tag{font:600 .74rem/1 var(--f-mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.part p{font-size:.96rem}
+.parts-list{columns:2;column-gap:32px;margin:0;padding-left:1.1em}
+.parts-list li{margin-bottom:6px;break-inside:avoid}
+@media (max-width:600px){.parts-list{columns:1}}
+
+.note{background:var(--warn-bg);color:var(--warn-ink);border-radius:10px;padding:14px 16px;font-size:.96rem;display:flex;gap:12px}
+.note strong{color:inherit}
+.note .ic{font:900 1rem/1.4 var(--f-display);flex:none}
+
+.figure{background:#fff;border:1px solid var(--rule);border-radius:12px;padding:10px;overflow:hidden}
+.figure img{display:block;width:100%;height:auto}
+.cap{font-size:.86rem;color:var(--muted);margin-top:8px}
+
+/* simulator */
+.sim{background:var(--surface);border:1px solid var(--rule);border-radius:16px;padding:22px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:28px}
+@media (max-width:860px){.sim{grid-template-columns:1fr;padding:16px}}
+.sim svg{width:100%;height:auto;display:block;border-radius:10px;background:#fff;touch-action:none;cursor:ew-resize}
+.sim-ctrl{display:flex;flex-direction:column;gap:16px;min-width:0}
+.seg{display:inline-flex;border:1.5px solid var(--ink);border-radius:999px;padding:3px;gap:3px;align-self:flex-start;flex-wrap:wrap}
+.seg button{font:700 .86rem/1 var(--f-body);border:0;background:transparent;color:var(--ink);padding:9px 14px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+label.lbl{font:700 .78rem/1 var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.bits{display:flex;gap:8px}
+.bit{flex:1;text-align:center;border-radius:8px;padding:8px 0 6px;border:1.5px solid var(--rule);font-family:var(--f-mono)}
+.bit b{display:block;font-size:1.5rem;line-height:1.1}
+.bit small{font-size:.72rem;color:var(--muted)}
+.bit.on{background:var(--line);color:var(--paper);border-color:var(--line)}
+.bit.on small{color:inherit;opacity:.75}
+.verdict{font:800 1.35rem/1.2 var(--f-display);font-stretch:95%}
+.verdict-sub{color:var(--muted);font-size:.95rem;margin-top:4px}
+.motors{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mot{border:1px solid var(--rule);border-radius:10px;padding:10px 12px}
+.mot .nm{font:700 .78rem/1 var(--f-mono);text-transform:uppercase;letter-spacing:.06em}
+.mot .meter{height:10px;background:var(--sunk);border-radius:99px;margin-top:10px;overflow:hidden}
+.mot .meter i{display:block;height:100%;border-radius:99px;transition:width .25s}
+.mot .val{font:700 1.05rem/1 var(--f-mono);margin-top:8px;font-variant-numeric:tabular-nums}
+.mot.ezk .nm,.mot.ezk .val{color:var(--w-ezk)} .mot.ezk .meter i{background:var(--w-ezk)}
+.mot.esk .nm,.mot.esk .val{color:var(--w-esk)} .mot.esk .meter i{background:var(--w-esk)}
+
+/* tables */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--rule);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+th{font:700 .74rem/1.2 var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--sunk)}
+td.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.pat{display:inline-flex;gap:3px}
+.pat i{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--ink);display:inline-block}
+.pat i.b{background:var(--line);border-color:var(--line)}
+.wire{display:inline-block;width:22px;height:5px;border-radius:3px;vertical-align:middle;margin-right:8px}
+
+/* phase banner */
+.phase-ban{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.phase-ban .big{font:900 clamp(4rem,10vw,7rem)/.8 var(--f-display);font-stretch:70%;color:var(--accent)}
+.sub-h{margin-top:40px;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.sub-h::before{content:"";width:22px;height:4px;background:var(--line);border-radius:2px}
+
+ol.steps{margin:0;padding:0;list-style:none;counter-reset:s;display:grid;gap:12px}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:34px minmax(0,1fr);gap:12px;align-items:start}
+ol.steps li::before{content:counter(s);font:800 .95rem/1 var(--f-display);width:30px;height:30px;border-radius:50%;border:2px solid var(--ink);display:flex;align-items:center;justify-content:center}
+
+/* mBlock-style blocks */
+.blocks-wrap{background:var(--sunk);border-radius:12px;padding:18px;overflow-x:auto}
+.blk-root{font:600 13px/1 var(--f-body);color:#fff;display:inline-flex;flex-direction:column;min-width:max-content}
+.blk{display:flex;align-items:center;gap:6px;padding:7px 10px;border-radius:5px;margin-bottom:2px;white-space:nowrap;width:max-content}
+.blk.hat{border-radius:16px 16px 5px 5px;padding-top:12px}
+.c-ev{background:#ffab19;color:#3a2600}
+.c-ctl{background:#ffab19;color:#3a2600}
+.c-var{background:#ff8c1a}
+.c-pin{background:#2f8ae6}
+.c-ser{background:#3fb877}
+.c-op{background:#59c059}
+.cwrap{background:#ffab19;border-radius:5px;padding:0 0 10px 0;margin-bottom:2px;width:max-content;min-width:200px}
+.cwrap>.blk{margin-bottom:0;background:transparent;color:#3a2600}
+.cwrap>.inner{margin-left:16px;padding:3px 0 1px 0;background:var(--sunk);border-radius:0 0 0 5px}
+.cwrap.cond{min-width:0}
+.slot{background:#fff;color:#333;border-radius:99px;padding:2px 8px;font-family:var(--f-mono);font-size:12px;font-weight:600}
+.drop{background:rgba(0,0,0,.18);border-radius:4px;padding:2px 7px}
+.rep{border-radius:99px;padding:3px 8px;display:inline-flex;align-items:center;gap:5px}
+.hex{background:#59c059;padding:4px 10px;clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 50%,calc(100% - 8px) 100%,8px 100%,0 50%);display:inline-flex;gap:5px;align-items:center;color:#fff}
+.eq{background:#4aa94a;padding:3px 9px;clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 50%,calc(100% - 6px) 100%,6px 100%,0 50%);display:inline-flex;gap:4px;align-items:center}
+.v{background:#ff8c1a;border-radius:99px;padding:2px 7px}
+.legend-es{font-size:.86rem;color:var(--muted);margin-top:12px}
+.legend-es summary{cursor:pointer;font-weight:700;color:var(--ink)}
+.legend-es table{font-size:.86rem;margin-top:8px}
+
+/* code */
+.code{background:var(--code-bg);color:var(--code-fg);border-radius:12px;overflow:hidden}
+.code-top{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.08);flex-wrap:wrap}
+.code-top span{font:600 .8rem/1 var(--f-mono);color:var(--code-com)}
+.code pre{margin:0;padding:16px;overflow:auto;max-height:520px;font:13px/1.6 var(--f-mono);tab-size:2}
+.code .com{color:var(--code-com)} .code .kw{color:var(--code-kw)} .code .num{color:var(--code-num)} .code .str{color:var(--code-str)}
+.btn{font:700 .86rem/1 var(--f-body);border:1.5px solid currentColor;background:transparent;color:inherit;border-radius:8px;padding:9px 13px;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+.btn.solid{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn.solid:hover{background:var(--accent);border-color:var(--accent);color:#1a1000}
+.btn:disabled{opacity:.5;cursor:default}
+details.codebox>summary{list-style:none;cursor:pointer}
+details.codebox>summary::-webkit-details-marker{display:none}
+details.codebox>summary .btn::after{content:"▾";font-size:.8em}
+details.codebox[open]>summary .btn::after{content:"▴"}
+details.codebox[open]>summary{margin-bottom:12px}
+.dl-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px}
+.dl-msg{font-size:.88rem;color:var(--muted)}
+
+/* PWM visual */
+.pwm{display:grid;gap:10px}
+.pwm-row{display:grid;grid-template-columns:60px minmax(0,1fr) 60px;gap:12px;align-items:center;font-family:var(--f-mono);font-size:.85rem}
+.pwm-row svg{width:100%;height:34px;display:block}
+.pwm-row .pct{color:var(--muted);text-align:right}
+
+.trouble{display:grid;gap:12px}
+.trouble details{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:14px 16px}
+.trouble summary{cursor:pointer;font-weight:700}
+.trouble details p{margin-top:8px;color:var(--muted)}
+
+footer{border-top:1px solid var(--rule);padding-block:32px 48px;color:var(--muted);font-size:.9rem}
+.mermaid-box{background:#fff;border:1px solid var(--rule);border-radius:12px;padding:16px;overflow-x:auto}
+</style>
+</head>
+<body>
+
+
+<header class="bar">
+  <div class="bar-in">
+    <a class="brand" href="#hasiera">db<b>Bots</b></a>
+    <nav class="nav" aria-label="Atalak">
+      <a href="#osagaiak">Osagaiak</a>
+      <a href="#logika">Logika</a>
+      <a href="#fasea1">1. fasea</a>
+      <a href="#fasea2">2. fasea</a>
+      <a href="#arazoak">Arazoak</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap" id="hasiera">
+  <section class="hero">
+    <div>
+      <div class="eyebrow">dbSariak · dbBots · ikastetxeentzako gida</div>
+      <h1>Lerro-jarraitzailea<span>Muntatu eta programatu zure robota</span></h1>
+      <p class="lede">Robot honek lurreko lerro beltz bat jarraitzen du bost sentsore infragorriri esker. Bi urratsetan eraikiko dugu: lehenik motorrak piztu eta itzali besterik ez, eta gero abiadura kontrolatuz, bihurguneak leunago hartzeko. Programazioa mBlock-ekin egiten da, eta nahi duenak Arduino kodea ere badu.</p>
+      <div class="phases">
+        <a class="phase-chip" href="#fasea1"><span class="n">1</span><span>Abiadura kontrolik gabe<small>Motorrak: piztuta / itzalita</small></span></a>
+        <a class="phase-chip" href="#fasea2"><span class="n">2</span><span>Abiadura kontrolarekin<small>PWM: 0 – 255</small></span></a>
+      </div>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <svg viewBox="0 0 520 380">
+        <rect width="520" height="380" rx="14" fill="#ffffff"/>
+        <path d="M-10 360 C 120 340, 160 250, 240 210 S 400 120, 530 40" fill="none" stroke="#111" stroke-width="30" stroke-linecap="round"/>
+        <g transform="translate(250 200) rotate(-24)">
+          <rect x="-90" y="-60" width="180" height="120" rx="14" fill="#1f5fbf" opacity=".12"/>
+          <rect x="-70" y="-40" width="140" height="94" rx="10" fill="#2a3340"/>
+          <rect x="-100" y="-30" width="24" height="56" rx="6" fill="#111"/>
+          <rect x="76" y="-30" width="24" height="56" rx="6" fill="#111"/>
+          <rect x="-82" y="-74" width="164" height="22" rx="5" fill="#1d68c9"/>
+          <g fill="#0b1c33">
+            <rect x="-74" y="-70" width="14" height="14" rx="3"/><rect x="-39" y="-70" width="14" height="14" rx="3"/>
+            <rect x="-7" y="-70" width="14" height="14" rx="3"/><rect x="25" y="-70" width="14" height="14" rx="3"/>
+            <rect x="60" y="-70" width="14" height="14" rx="3"/>
+          </g>
+          <rect x="-40" y="-26" width="80" height="54" rx="4" fill="#2f8ae6"/>
+          <rect x="-30" y="34" width="60" height="14" rx="3" fill="#e8850c"/>
+        </g>
+        <text x="20" y="34" font-family="JetBrains Mono, monospace" font-size="13" fill="#5d5d57">S1 S2 S3 S4 S5 → 1 1 0 1 1</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- OSAGAIAK -->
+  <section class="sec" id="osagaiak">
+    <div class="sec-head">
+      <span class="step">01</span>
+      <h2>Zer behar dugu?</h2>
+      <p>Robota hiru zatitan banatzen da: kontrola (Arduinoa), potentzia etapa (bateria eta motor kontrolatzailea) eta sentsoreak.</p>
+    </div>
+
+    <div class="grid3">
+      <article class="part">
+        <div class="pic"><img src="irudiak/l298n-argazkia.jpg" alt="L298N motor kontrolatzailea"></div>
+        <span class="tag">Potentzia etapa</span>
+        <h3>L298N motor kontrolatzailea</h3>
+        <p>Arduinoaren pinek ez dute motor bat mugitzeko adina korronte ematen. L298N moduluak bi motor mugi ditzake bi noranzkotan (edo lau motor noranzko bakarrean).</p>
+      </article>
+      <article class="part">
+        <div class="pic"><img src="irudiak/sentsoreak.jpg" alt="Bost sentsore infragorriko modulua"></div>
+        <span class="tag">Sentsoreak</span>
+        <h3>5 sentsoreko modulu infragorria</h3>
+        <p>Sentsore bakoitza opto-akoplagailu bat da: LED infragorri igorle bat eta fototransistore hartzaile bat. Irteerak: OUT1…OUT5, 5V eta GND.</p>
+      </article>
+      <article class="part">
+        <div class="pic" style="background:#fff"><svg viewBox="0 0 160 120" width="150" height="120" aria-label="LiPo bateria"><rect x="20" y="30" width="120" height="70" rx="8" fill="#1d2a22"/><rect x="28" y="40" width="104" height="50" rx="4" fill="#2f9e55"/><text x="80" y="72" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="800" font-size="20" fill="#fff">2S 7,4V</text><path d="M60 30 C 60 12, 78 10, 80 4" stroke="#d22b2b" stroke-width="4" fill="none"/><path d="M70 30 C 70 16, 88 14, 92 6" stroke="#111" stroke-width="4" fill="none"/></svg></div>
+        <span class="tag">Potentzia etapa</span>
+        <h3>LiPo bateria, 2 zelda</h3>
+        <p>Litiozko bateria arina eta indartsua, robotikan eta irrati-kontrolean oso erabilia. NiCd edo NiMH bateriek baino errendimendu handiagoa du.</p>
+      </article>
+    </div>
+
+    <h3 class="sub-h">Osagaien zerrenda</h3>
+    <ul class="parts-list">
+      <li>Arduino Uno eta USB kablea</li>
+      <li>L298N motor kontrolatzailea</li>
+      <li>5 sentsoreko modulu infragorria (OUT1…OUT5)</li>
+      <li>2 DC motor eta gurpilak</li>
+      <li>LiPo bateria, 2 zelda (7,2–7,4 V) eta bere kargagailua</li>
+      <li>Txasisa eta gurpil eroalea (ball caster)</li>
+      <li>Dupont kableak (ar-eme eta ar-ar)</li>
+      <li>Torloju-tornavis txikia (L298N bornetarako)</li>
+    </ul>
+
+    <div class="note" style="margin-top:24px"><span class="ic">!</span><p><strong>LiPo bateriak kontuz erabili.</strong> Kargatu beti LiPo-rako kargagailu batekin eta begiratuta, ez utzi guztiz deskargatzen, eta ez erabili kolpatuta edo puztuta badago. Informazio gehiago: <a href="https://erlerobotics.gitbooks.io/erle-robotics-erle-copter/content/en/safety/lipo.html" target="_blank" rel="noopener">LiPo baterien segurtasuna</a>.</p></div>
+
+    <div class="grid2" style="margin-top:28px;align-items:start">
+      <figure class="figure" style="margin:0"><img src="irudiak/l298n.jpg" alt="L298N moduluaren pinak: OUT1-OUT4, ENA, IN1-IN4, ENB, 5V, GND, 12V"><figcaption class="cap">L298N moduluaren pinak. OUT1/OUT2 ezkerreko motorrera eta OUT3/OUT4 eskuinekora. ENA eta ENB abiadura kontrolatzeko dira.</figcaption></figure>
+      <figure class="figure" style="margin:0"><img src="irudiak/optoa.jpg" alt="Sentsore infragorriaren funtzionamendua: gainazal beltzak ez du islatzen, zuriak bai"><figcaption class="cap">Gainazal zuriak argia islatzen du eta fototransistoreari iristen zaio. Gainazal beltzak argia xurgatzen du.</figcaption></figure>
+    </div>
+  </section>
+
+  <!-- LOGIKA -->
+  <section class="sec" id="logika">
+    <div class="sec-head">
+      <span class="step">02</span>
+      <h2>Nola funtzionatzen du?</h2>
+      <p>Sentsore batek gainazal beltza ikusten badu <code>0</code> ematen du (0 V), eta zuria ikusten badu <code>1</code> (5 V). Arduinoak bost balio horiek irakurri eta motorrei zer egin erabakitzen du.</p>
+    </div>
+
+    <div class="sim" id="sim">
+      <svg id="simSvg" viewBox="0 0 400 300" role="img" aria-label="Simulagailua: lerroa sentsoreen azpian mugitu">
+        <rect width="400" height="300" fill="#ffffff"/>
+        <rect id="simLine" x="185" y="0" width="30" height="300" fill="#111111"/>
+        <g id="simBar"></g>
+        <text x="200" y="290" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#8a8a82">← arrastatu lerroa →</text>
+      </svg>
+      <div class="sim-ctrl">
+        <div class="seg" role="group" aria-label="Fasea aukeratu">
+          <button type="button" id="ph1" aria-pressed="true">1. fasea</button>
+          <button type="button" id="ph2" aria-pressed="false">2. fasea (PWM)</button>
+        </div>
+        <div>
+          <label class="lbl" for="pos">Lerroaren posizioa</label>
+          <input id="pos" type="range" min="-2.6" max="2.6" step="0.05" value="0">
+        </div>
+        <div>
+          <div class="lbl" style="margin-bottom:8px">Sentsoreen irakurketa</div>
+          <div class="bits" id="bits"></div>
+        </div>
+        <div>
+          <div class="verdict" id="verdict">Aurrera</div>
+          <div class="verdict-sub" id="verdictSub"></div>
+        </div>
+        <div class="motors">
+          <div class="mot ezk"><div class="nm">Ezkerreko motorra</div><div class="meter"><i id="mEzk"></i></div><div class="val" id="vEzk">—</div></div>
+          <div class="mot esk"><div class="nm">Eskuineko motorra</div><div class="meter"><i id="mEsk"></i></div><div class="val" id="vEsk">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="sub-h">Bost egoerak</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>S1 S2 S3 S4 S5</th><th>Egoera</th><th>1. fasea (piztu / itzali)</th><th>2. fasea (PWM)</th></tr></thead>
+        <tbody id="caseRows"></tbody>
+      </table>
+    </div>
+    <p class="cap">S1 ezkerrekoena da eta S5 eskuinekoena, robota atzetik begiratuta eta aurrera doala. Lerroa eskuinean geratzen bada, eskuineko motorra moteldu edo gelditzen da robota eskuinera bira dadin.</p>
+
+    <h3 class="sub-h">Fluxu-diagrama</h3>
+    <div class="mermaid-box">
+<pre class="mermaid">
+flowchart TD
+  A([HASIERA]) --> B[Aldagaiak izendatu]
+  B --> C[Sarrerak eta irteerak hasieratu]
+  C --> D[/Sentsoreen egoera irakurri/]
+  D --> E{Erdiko sentsorea beltza<br/>eta besteak zuriak?}
+  E -- Bai --> E1[Bi motorrak aurrera]
+  E -- Ez --> F{Eskuineko lehen sentsorea<br/>beltza eta besteak zuriak?}
+  F -- Bai --> F1[Eskuineko motorra geldi edo motel<br/>ezkerrekoa aurrera]
+  F -- Ez --> G{Ezkerreko lehen sentsorea<br/>beltza eta besteak zuriak?}
+  G -- Bai --> G1[Ezkerreko motorra geldi edo motel<br/>eskuinekoa aurrera]
+  G -- Ez --> H{Eskuineko bigarren sentsorea<br/>beltza eta besteak zuriak?}
+  H -- Bai --> H1[Eskuineko motorra geldi<br/>ezkerrekoa aurrera]
+  H -- Ez --> I{Ezkerreko bigarren sentsorea<br/>beltza eta besteak zuriak?}
+  I -- Bai --> I1[Ezkerreko motorra geldi<br/>eskuinekoa aurrera]
+  E1 --> D
+  F1 --> D
+  G1 --> D
+  H1 --> D
+  I1 --> D
+  I -- Ez --> D
+  classDef once fill:#55c6b7,stroke:#1a5f56,color:#0b2b27
+  classDef loop fill:#c69ac7,stroke:#5e3a60,color:#2a1530
+  class B,C once
+  class D,E,F,G,H,I,E1,F1,G1,H1,I1 loop
+</pre>
+    </div>
+    <p class="cap">Berdea: behin bakarrik egiten diren atazak (<code>setup</code>). More-arrosa: behin eta berriz errepikatzen direnak (<code>loop</code> / betiko).</p>
+  </section>
+
+  <!-- FASEA 1 -->
+  <section class="sec" id="fasea1">
+    <div class="phase-ban">
+      <span class="big">1</span>
+      <div>
+        <div class="eyebrow">1. fasea</div>
+        <h2>Abiadura kontrolik gabe</h2>
+        <p style="color:var(--muted);margin-top:8px;max-width:60ch">Motor bakoitza piztuta edo itzalita dago. Erraza da muntatzen eta programatzen, baina bihurguneetan robotak kolpeka egiten du.</p>
+      </div>
+    </div>
+
+    <h3 class="sub-h">Kableatzea</h3>
+    <figure class="figure" style="margin:0"><img src="irudiak/kableak-1.jpg" alt="1. faseko kableatze eskema: LiPo bateria, L298N, bi motor, Arduino Uno eta sentsore modulua"></figure>
+    <div class="grid2" style="margin-top:20px">
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Nondik</th><th>Nora</th></tr></thead>
+        <tbody>
+          <tr><td><span class="wire" style="background:var(--w-ezk)"></span>L298N IN1</td><td class="mono">Arduino D11</td></tr>
+          <tr><td><span class="wire" style="background:var(--w-ezk)"></span>L298N IN2</td><td class="mono">Arduino D10</td></tr>
+          <tr><td><span class="wire" style="background:var(--w-esk)"></span>L298N IN3</td><td class="mono">Arduino D9</td></tr>
+          <tr><td><span class="wire" style="background:var(--w-esk)"></span>L298N IN4</td><td class="mono">Arduino D8</td></tr>
+          <tr><td><span class="wire" style="background:var(--w-5v)"></span>Bateria +</td><td class="mono">L298N 12V</td></tr>
+          <tr><td><span class="wire" style="background:var(--w-gnd)"></span>Bateria −</td><td class="mono">L298N GND</td></tr>
+          <tr><td><span class="wire" style="background:var(--w-5v)"></span>L298N 5V</td><td class="mono">Arduino 5V</td></tr>
+          <tr><td><span class="wire" style="background:var(--w-gnd)"></span>L298N GND</td><td class="mono">Arduino GND</td></tr>
+        </tbody></table></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Sentsore modulua</th><th>Arduino</th></tr></thead>
+        <tbody>
+          <tr><td>OUT1 (S1)</td><td class="mono">D2</td></tr>
+          <tr><td>OUT2 (S2)</td><td class="mono">D3</td></tr>
+          <tr><td>OUT3 (S3)</td><td class="mono">D4</td></tr>
+          <tr><td>OUT4 (S4)</td><td class="mono">D5</td></tr>
+          <tr><td>OUT5 (S5)</td><td class="mono">D6</td></tr>
+          <tr><td>5V</td><td class="mono">5V</td></tr>
+          <tr><td>GND</td><td class="mono">GND</td></tr>
+        </tbody></table></div>
+    </div>
+    <div class="note" style="margin-top:16px"><span class="ic">i</span><p>Fase honetan L298N-aren <strong>ENA eta ENB jumperrak jarrita</strong> utzi: horrela motorrak beti abiadura osoan dabiltza. Ezkerreko motorra OUT1/OUT2 bornetan eta eskuinekoa OUT3/OUT4 bornetan.</p></div>
+
+    <h3 class="sub-h">mBlock-ekin programatu</h3>
+    <ol class="steps">
+      <li><p>Ireki <a href="https://ide.mblock.cc/" target="_blank" rel="noopener">ide.mblock.cc</a> edo mBlock 5 aplikazioa.</p></li>
+      <li><p><em>Gailuak</em> fitxan, gehitu <strong>Arduino Uno</strong> eta ezarri <strong>Kargatu</strong> modua (ez <em>Zuzenean</em>).</p></li>
+      <li><p>Sortu bost aldagai: <code>egoeraS1</code> … <code>egoeraS5</code>.</p></li>
+      <li><p>Eraiki behean dagoen programa (edo ireki deskargatutako <code>.mblock</code> fitxategia), konektatu Arduinoa USB bidez eta sakatu <strong>Kargatu</strong>.</p></li>
+    </ol>
+    <div class="blocks-wrap" style="margin-top:18px"><div class="blk-root" id="blocks1"></div></div>
+
+    <details class="legend-es">
+      <summary>mBlock gazteleraz baduzu: blokeen izenak</summary>
+      <div class="tbl-wrap" style="margin-top:8px"><table>
+        <thead><tr><th>Gida honetan</th><th>mBlock (gaztelaniaz)</th></tr></thead>
+        <tbody>
+          <tr><td>Arduino Uno abiaraztean</td><td>cuando Arduino Uno se inicia</td></tr>
+          <tr><td>betiko</td><td>para siempre</td></tr>
+          <tr><td>ezarri … balioa</td><td>fija … a</td></tr>
+          <tr><td>irakurri pin digitala</td><td>lee pin digital</td></tr>
+          <tr><td>baldin … orduan</td><td>si … entonces</td></tr>
+          <tr><td>… eta …</td><td>… y …</td></tr>
+          <tr><td>ezarri pin digitala … altua / baxua</td><td>pon el pin digital … a alto / bajo</td></tr>
+          <tr><td>ezarri PWM pina … balioa</td><td>pon el pin PWM … a</td></tr>
+          <tr><td>idatzi serie-atakan</td><td>escribir en puerto serie</td></tr>
+        </tbody></table></div>
+    </details>
+
+    <h3 class="sub-h">Arduino kodea (aukerakoa)</h3>
+    <details class="codebox">
+      <summary><span class="btn">Erakutsi kodea</span></summary>
+      <div class="code"><div class="code-top"><span>1-fasea_abiadura_kontrolik_gabe.ino</span><button type="button" class="btn" data-copy="code1">Kopiatu</button></div><pre id="code1">Kargatzen…</pre></div>
+    </details>
+
+    <div class="dl-row">
+      <a class="btn solid" href="fitxategiak/1-fasea_abiadura_kontrolik_gabe.zip" download style="text-decoration:none">Deskargatu 1. fasea (.zip)</a>
+      <a class="btn" href="fitxategiak/1-fasea_abiadura_kontrolik_gabe.mblock" download style="text-decoration:none">.mblock</a>
+      <a class="btn" href="fitxategiak/1-fasea_abiadura_kontrolik_gabe.ino" download style="text-decoration:none">.ino</a>
+    </div>
+  </section>
+
+  <!-- FASEA 2 -->
+  <section class="sec" id="fasea2">
+    <div class="phase-ban">
+      <span class="big">2</span>
+      <div>
+        <div class="eyebrow">2. fasea</div>
+        <h2>Abiadura kontrolarekin</h2>
+        <p style="color:var(--muted);margin-top:8px;max-width:60ch">Orain motor bakoitzaren abiadura kontrolatzen dugu PWM bidez. Bihurgune leunetan motor bat moteldu besterik ez da egiten, eta robota azkarrago eta finago doa.</p>
+      </div>
+    </div>
+
+    <h3 class="sub-h">Zer da PWM?</h3>
+    <div class="grid2" style="align-items:center">
+      <p>PWM (<em>Pulse Width Modulation</em>) seinalea oso azkar pizten eta itzaltzen da. Denbora gehiago piztuta egon, orduan eta indar gehiago jasotzen du motorrak. Arduinoan balioa <code>0</code>tik (geldi) <code>255</code>era (abiadura osoa) doa, eta <code>~</code> ikurra duten pinetan bakarrik erabil daiteke: 3, 5, 6, 9, 10 eta 11. Guk <strong>D10</strong> eta <strong>D11</strong> erabiliko ditugu.</p>
+      <div class="pwm" id="pwm"></div>
+    </div>
+
+    <h3 class="sub-h">Kableatzean zer aldatzen da?</h3>
+    <figure class="figure" style="margin:0"><img src="irudiak/kableak-2.jpg" alt="2. faseko kableatze eskema: PWM kableak L298N-aren ENA eta ENB pinetatik Arduinoaren 11 eta 10 pinetara"></figure>
+    <div class="note" style="margin-top:16px"><span class="ic">!</span><p><strong>Kendu ENA eta ENB jumperrak</strong> eta konektatu pin horiek Arduinoaren PWM pinetara. Ezkerreko motorraren noranzko kableak D10/D11-tik D12/D13-ra pasatzen dira, D11 PWMrako libre geratzeko.</p></div>
+    <div class="tbl-wrap" style="margin-top:16px"><table>
+      <thead><tr><th>L298N</th><th>Arduino</th><th>Zertarako</th></tr></thead>
+      <tbody>
+        <tr><td><span class="wire" style="background:var(--w-pwm-ezk)"></span>ENA</td><td class="mono">D11 (~PWM)</td><td>Ezkerreko motorraren abiadura</td></tr>
+        <tr><td><span class="wire" style="background:var(--w-ezk)"></span>IN1</td><td class="mono">D13</td><td rowspan="2">Ezkerreko motorraren noranzkoa</td></tr>
+        <tr><td><span class="wire" style="background:var(--w-ezk)"></span>IN2</td><td class="mono">D12</td></tr>
+        <tr><td><span class="wire" style="background:var(--w-esk)"></span>IN3</td><td class="mono">D9</td><td rowspan="2">Eskuineko motorraren noranzkoa</td></tr>
+        <tr><td><span class="wire" style="background:var(--w-esk)"></span>IN4</td><td class="mono">D8</td></tr>
+        <tr><td><span class="wire" style="background:var(--w-pwm-esk)"></span>ENB</td><td class="mono">D10 (~PWM)</td><td>Eskuineko motorraren abiadura</td></tr>
+      </tbody></table></div>
+    <p class="cap">Sentsoreak eta elikadura 1. fasean bezala geratzen dira.</p>
+
+    <h3 class="sub-h">mBlock-ekin programatu</h3>
+    <p style="max-width:68ch">Egitura berbera da: sentsoreak irakurri eta bost baldintzak egiaztatu. Aldaketa bakarra: motor bakoitzari <strong>ezarri PWM pina</strong> blokearekin abiadura bat ematen zaio. Probatu <code>150</code>-en ordez beste balio batzuk zuen pistan hobeto dabilen ikusteko.</p>
+    <div class="blocks-wrap" style="margin-top:18px"><div class="blk-root" id="blocks2"></div></div>
+
+    <h3 class="sub-h">Arduino kodea (aukerakoa)</h3>
+    <details class="codebox">
+      <summary><span class="btn">Erakutsi kodea</span></summary>
+      <div class="code"><div class="code-top"><span>2-fasea_abiadura_kontrolarekin.ino</span><button type="button" class="btn" data-copy="code2">Kopiatu</button></div><pre id="code2">Kargatzen…</pre></div>
+    </details>
+
+    <div class="dl-row">
+      <a class="btn solid" href="fitxategiak/2-fasea_abiadura_kontrolarekin.zip" download style="text-decoration:none">Deskargatu 2. fasea (.zip)</a>
+      <a class="btn" href="fitxategiak/2-fasea_abiadura_kontrolarekin.mblock" download style="text-decoration:none">.mblock</a>
+      <a class="btn" href="fitxategiak/2-fasea_abiadura_kontrolarekin.ino" download style="text-decoration:none">.ino</a>
+    </div>
+  </section>
+
+  <!-- ARAZOAK -->
+  <section class="sec" id="arazoak">
+    <div class="sec-head">
+      <span class="step">03</span>
+      <h2>Arazoak konpontzen</h2>
+      <p>Robotak ez du lehen aldian ondo funtzionatzen? Normala da. Begiratu hauek.</p>
+    </div>
+    <div class="trouble">
+      <details><summary>Motor bat atzerantz biratzen du</summary><p>Trukatu motor horren bi kableak L298N-aren bornean (OUT1↔OUT2 edo OUT3↔OUT4). Ez da programa aldatu behar.</p></details>
+      <details><summary>Bihurguneetan robotak lerrotik ihes egiten du</summary><p>Sentsore-barra alderantziz dago, edo motorrak trukatuta daude. Ziurtatu S1 (OUT1) robotaren ezkerrean dagoela eta ezkerreko motorra OUT1/OUT2 bornean. Bestela, trukatu programan eskuineko eta ezkerreko motorren balioak.</p></details>
+      <details><summary>Sentsoreek beti 1 edo beti 0 ematen dute</summary><p>Ireki serie-monitorea (9600 baud) eta begiratu bost balioak. Jarri sentsoreak lurretik gertu, milimetro gutxira, eta egiaztatu 5V eta GND ondo konektatuta daudela.</p></details>
+      <details><summary>Robota bat-batean bide zuzenetik ateratzen da</summary><p>Lerroa bi sentsoreren artean geratzen bada (adibidez <code>1 1 0 0 1</code>), ez da bost baldintzetako bat ere betetzen eta robotak aurreko agindua mantentzen du. Simulagailuan ikus dezakezu. Erronka: gehitu baldintza berriak egoera horietarako.</p></details>
+      <details><summary>Arduinoa berrabiarazten da motorrak piztean</summary><p>Bateria ahul dago edo GND komuna falta da. Kargatu bateria eta egiaztatu bateriaren GND, L298N-arena eta Arduinoarena lotuta daudela.</p></details>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">dbSariak · dbBots — Lerro-jarraitzailearen muntaketa gida ikastetxeentzat.</div>
+</footer>
+
+<script>
+(function(){
+  // ---------- shared data ----------
+  // pattern: S1..S5 ; ph1: [ezk, esk] on/off ; ph2: [ezk, esk] PWM
+  const CASES = [
+    {p:[1,1,0,1,1], name:"Aurrera", sub:"Lerroa erdian dago.", ph1:[1,1], ph2:[255,255]},
+    {p:[1,1,1,0,1], name:"Eskuinera, leun", sub:"Lerroa pixka bat eskuinera dago.", ph1:[1,0], ph2:[255,150]},
+    {p:[1,0,1,1,1], name:"Ezkerrera, leun", sub:"Lerroa pixka bat ezkerrera dago.", ph1:[0,1], ph2:[150,255]},
+    {p:[1,1,1,1,0], name:"Eskuinera, gogor", sub:"Lerroa oso eskuinera dago.", ph1:[1,0], ph2:[255,0]},
+    {p:[0,1,1,1,1], name:"Ezkerrera, gogor", sub:"Lerroa oso ezkerrera dago.", ph1:[0,1], ph2:[0,255]},
+  ];
+
+  // ---------- case table ----------
+  const rows = document.getElementById('caseRows');
+  const pat = p => '<span class="pat" aria-label="'+p.join(' ')+'">'+p.map(v=>'<i class="'+(v?'':'b')+'"></i>').join('')+'</span> <code>'+p.join(' ')+'</code>';
+  const onoff = v => v ? 'aurrera' : 'geldi';
+  rows.innerHTML = CASES.map(c => '<tr><td class="mono">'+pat(c.p)+'</td><td><strong>'+c.name+'</strong></td><td>Ezk: '+onoff(c.ph1[0])+' · Esk: '+onoff(c.ph1[1])+'</td><td class="mono">Ezk '+c.ph2[0]+' · Esk '+c.ph2[1]+'</td></tr>').join('');
+
+  // ---------- simulator ----------
+  const svg = document.getElementById('simSvg'), line = document.getElementById('simLine'), barG = document.getElementById('simBar');
+  const pos = document.getElementById('pos'), bitsEl = document.getElementById('bits');
+  const SP = 64, CX = 200, LW = 30;
+  let phase = 1, last = CASES[0];
+  // draw sensor bar
+  let s = '<rect x="40" y="118" width="320" height="64" rx="8" fill="#1d68c9"/>';
+  for (let i=0;i<5;i++){ const x = CX + (i-2)*SP;
+    s += '<rect x="'+(x-13)+'" y="128" width="26" height="30" rx="4" fill="#0b1c33"/><circle id="led'+i+'" cx="'+x+'" cy="143" r="7" fill="#5aa9ff"/>'+
+         '<text x="'+x+'" y="174" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" font-weight="600" fill="#ffffff">S'+(i+1)+'</text>'; }
+  s += '<text x="200" y="106" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#8a8a82">↑ robotaren aurrealdea</text>';
+  barG.innerHTML = s;
+  bitsEl.innerHTML = [0,1,2,3,4].map(i=>'<div class="bit" id="bit'+i+'"><b>1</b><small>S'+(i+1)+'</small></div>').join('');
+
+  function update(){
+    const v = parseFloat(pos.value), lx = CX + v*SP;
+    line.setAttribute('x', lx - LW/2);
+    const r = [];
+    for (let i=0;i<5;i++){ const x = CX + (i-2)*SP; const black = Math.abs(x-lx) < LW/2 + 19;
+      r.push(black?0:1);
+      document.getElementById('led'+i).setAttribute('fill', black ? '#ff9b2f' : '#5aa9ff');
+      const b = document.getElementById('bit'+i); b.classList.toggle('on', black); b.querySelector('b').textContent = black?0:1; }
+    const hit = CASES.find(c => c.p.every((x,i)=>x===r[i]));
+    const vd = document.getElementById('verdict'), vs = document.getElementById('verdictSub');
+    let c;
+    if (hit){ c = hit; last = hit; vd.textContent = hit.name; vs.textContent = hit.sub; }
+    else { c = last; vd.textContent = 'Ez da baldintzarik betetzen'; vs.textContent = 'Robotak aurreko agindua mantentzen du: “'+last.name+'”.'; }
+    const m = phase===1 ? c.ph1.map(x=>x*255) : c.ph2;
+    document.getElementById('mEzk').style.width = (m[0]/255*100)+'%';
+    document.getElementById('mEsk').style.width = (m[1]/255*100)+'%';
+    document.getElementById('vEzk').textContent = phase===1 ? (m[0]?'PIZTUTA':'ITZALITA') : 'PWM '+m[0];
+    document.getElementById('vEsk').textContent = phase===1 ? (m[1]?'PIZTUTA':'ITZALITA') : 'PWM '+m[1];
+  }
+  pos.addEventListener('input', update);
+  function setPhase(p){ phase=p; document.getElementById('ph1').setAttribute('aria-pressed', p===1); document.getElementById('ph2').setAttribute('aria-pressed', p===2); update(); }
+  document.getElementById('ph1').onclick = ()=>setPhase(1);
+  document.getElementById('ph2').onclick = ()=>setPhase(2);
+  // drag on svg
+  let drag=false;
+  function fromEvt(e){ const r = svg.getBoundingClientRect(); const x = (e.clientX - r.left) / r.width * 400; pos.value = Math.max(-2.6, Math.min(2.6, (x-CX)/SP)).toFixed(2); update(); }
+  svg.addEventListener('pointerdown', e=>{drag=true; svg.setPointerCapture(e.pointerId); fromEvt(e);});
+  svg.addEventListener('pointermove', e=>{ if(drag) fromEvt(e); });
+  svg.addEventListener('pointerup', ()=>drag=false);
+  update();
+
+  // ---------- PWM visual ----------
+  const pwm = document.getElementById('pwm');
+  pwm.innerHTML = [[0,'Geldi'],[150,'Motel'],[255,'Osoa']].map(([v,l])=>{
+    const d = v/255, per = 50, w = per*d; let path = 'M0 28';
+    for (let k=0;k<6;k++){ const x0=k*per; if (w>0){ path += ' L'+x0+' 6 L'+(x0+w)+' 6 L'+(x0+w)+' 28'; } path += ' L'+(x0+per)+' 28'; }
+    return '<div class="pwm-row"><span>'+v+'</span><svg viewBox="0 0 300 34" preserveAspectRatio="none"><path d="'+path+'" fill="none" stroke="var(--accent)" stroke-width="2.5" vector-effect="non-scaling-stroke"/></svg><span class="pct">'+Math.round(d*100)+'%</span></div>';
+  }).join('');
+
+  // ---------- mBlock-style blocks ----------
+  const slot = t => '<span class="slot">'+t+'</span>';
+  const v = n => '<span class="v">'+n+'</span>';
+  const cond = p => '<span class="hex">'+p.map((x,i)=>'<span class="eq">'+v('egoeraS'+(i+1))+' = '+slot(x)+'</span>').join(' eta ')+'</span>';
+  const blk = (cls, html) => '<div class="blk '+cls+'">'+html+'</div>';
+  const setD = (pin, lv) => blk('c-pin', 'ezarri pin digitala '+slot(pin)+' <span class="drop">'+(lv?'altua':'baxua')+' ▾</span>');
+  const setP = (pin, val) => blk('c-pin', 'ezarri PWM pina '+slot(pin)+' balioa '+slot(val));
+  const ifc = (p, inner) => '<div class="cwrap cond"><div class="blk">baldin '+cond(p)+' orduan</div><div class="inner">'+inner+'</div></div>';
+  function program(body, withSerial){
+    let reads = '';
+    for (let i=0;i<5;i++) reads += blk('c-var', 'ezarri <span class="drop">egoeraS'+(i+1)+' ▾</span> balioa <span class="rep c-pin">irakurri pin digitala '+slot(i+2)+'</span>');
+    let ser = '';
+    if (withSerial) for (let i=0;i<5;i++) ser += blk('c-ser', 'idatzi serie-atakan '+v('egoeraS'+(i+1)));
+    return blk('hat c-ev','Arduino Uno abiaraztean') +
+      '<div class="cwrap"><div class="blk">betiko</div><div class="inner">'+reads+ser+body+'</div></div>';
+  }
+  // phase 1 : right motor 8/9, left motor 10/11 ; ph1 = [ezk, esk]
+  document.getElementById('blocks1').innerHTML = program(CASES.map(c =>
+    ifc(c.p, setD(8,c.ph1[1]) + setD(9,0) + setD(10,c.ph1[0]) + setD(11,0))).join(''), true);
+  // phase 2 : right 8/9 + PWM 10 ; left 12/13 + PWM 11
+  document.getElementById('blocks2').innerHTML = program(CASES.map(c =>
+    ifc(c.p, setD(8,1)+setD(9,0)+setP(10,c.ph2[1])+setD(12,1)+setD(13,0)+setP(11,c.ph2[0]))).join(''), false);
+
+  // ---------- code (fetched from the published .ino files) ----------
+  function hl(src){
+    const esc = src.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return esc.split('\n').map(l=>{
+      const i = l.indexOf('//');
+      let codePart = i>=0 ? l.slice(0,i) : l, com = i>=0 ? '<span class="com">'+l.slice(i)+'</span>' : '';
+      codePart = codePart.replace(/(".*?")/g,'<span class="str">$1</span>')
+        .replace(/\b(void|int|if|#define|HIGH|LOW|INPUT|OUTPUT)\b/g,'<span class="kw">$1</span>')
+        .replace(/(#define)/g,'<span class="kw">$1</span>')
+        .replace(/\b(\d+)\b(?![^<]*>)/g,'<span class="num">$1</span>');
+      return codePart + com;
+    }).join('\n');
+  }
+  const RAW = {};
+  [['code1','1-fasea_abiadura_kontrolik_gabe.ino'],['code2','2-fasea_abiadura_kontrolarekin.ino']].forEach(([id,f])=>{
+    fetch('fitxategiak/'+f).then(r=>{ if(!r.ok) throw 0; return r.text(); }).then(t=>{ RAW[id]=t; document.getElementById(id).innerHTML = hl(t); })
+      .catch(()=>{ document.getElementById(id).textContent = 'Ezin izan da kodea kargatu. Deskargatu fasearen fitxategia behean.'; });
+  });
+  document.querySelectorAll('[data-copy]').forEach(b=>b.addEventListener('click', ()=>{
+    const id = b.dataset.copy, t = RAW[id] || '';
+    const done = ok => { b.textContent = ok ? 'Kopiatuta' : 'Hautatu eta kopiatu'; setTimeout(()=>b.textContent='Kopiatu', 1800); };
+    if (navigator.clipboard && t) navigator.clipboard.writeText(t).then(()=>done(true), ()=>{ selectPre(id); done(false); });
+    else { selectPre(id); done(false); }
+  }));
+  function selectPre(id){ const r = document.createRange(); r.selectNodeContents(document.getElementById(id)); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+
+})();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true,securityLevel:"loose",theme:"default"});</script>
+</body>
+</html>
