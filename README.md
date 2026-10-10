@@ -3,7 +3,7 @@
 Lerro-jarraitzaile robot bat muntatzeko eta programatzeko gida, ikastetxeentzat.
 **dbSariak**eko **dbBots** ekitaldirako prestatua, Don Bosco-ko Elektronika eta Telekomunikazioak sailak egina.
 
-🌐 **Weba:** https://ERABILTZAILEA.github.io/dbbots-lerro-jarraitzailea/
+🌐 **Weba:** https://elektronikadonbosco.github.io/dbBots/#arazoak 
 
 ![Webaren hasiera](irudiak/pantaila-argazkia.png)
 
